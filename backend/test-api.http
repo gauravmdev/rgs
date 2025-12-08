@@ -1,0 +1,58 @@
+### 1. Health Check
+GET http://localhost:3000/health
+
+### 2. Login as Admin
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@delivery.com",
+  "password": "password123"
+}
+
+### 3. Get All Stores (Copy token from login response)
+GET http://localhost:3000/api/stores
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 4. Get Dashboard Stats
+GET http://localhost:3000/api/analytics/dashboard
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 5. Get All Orders
+GET http://localhost:3000/api/orders
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 6. Get Orders by Status
+GET http://localhost:3000/api/orders?status=CREATED,ASSIGNED
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 7. Get Daily Sales
+GET http://localhost:3000/api/analytics/daily-sales
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 8. Login as Store Manager
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager1@delivery.com",
+  "password": "password123"
+}
+
+### 9. Login as Delivery Boy
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "delivery1@delivery.com",
+  "password": "password123"
+}
+
+### 10. Login as Customer
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer1@test.com",
+  "password": "password123"
+}
