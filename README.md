@@ -1,4 +1,4 @@
-# RGSDA - Rakhangi General Stores Delivery App
+# RGSDA -  App
 
 A comprehensive delivery management system comprising a backend API, real-time socket services, and three distinct frontend applications for Admins, Managers, and Delivery Staff.
 
