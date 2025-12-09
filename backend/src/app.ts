@@ -18,36 +18,35 @@ const app = new Hono();
 
 // Global middleware
 // Global middleware
-// CORS must be first to handle preflight requests correctly
-app.use('*', cors({
-    origin: (origin) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return process.env.NODE_ENV === 'development' ? origin : null;
+// Manual CORS Middleware - The nuclear option to ensure headers are ALWAYS sent
+app.use('*', async (c, next) => {
+    const origin = c.req.header('Origin');
 
-        // Development localhosts
-        if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost:')) {
-            return origin;
-        }
+    // Allowed Domains
+    const allowedDomains = [
+        'https://admin.rakhangi.shop',
+        'https://delivery.rakhangi.shop',
+        'https://manager.rakhangi.shop',
+        'https://api.rakhangi.shop',
+        'http://localhost:5173', // Local dev allowed
+        'http://localhost:4173'
+    ];
 
-        // Production Domains (Hardcoded Fallbacks + Env Var)
-        const allowedDomains = [
-            'https://admin.rakhangi.shop',
-            'https://delivery.rakhangi.shop',
-            'https://manager.rakhangi.shop',
-            'https://api.rakhangi.shop'
-        ];
+    // Check if origin is allowed
+    if (origin && (allowedDomains.includes(origin) || process.env.ALLOWED_ORIGINS === '*')) {
+        c.res.headers.set('Access-Control-Allow-Origin', origin);
+        c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        c.res.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
 
-        const envAllowed = process.env.ALLOWED_ORIGINS?.split(',') || [];
-        const allAllowed = [...allowedDomains, ...envAllowed];
+    // Handle Preflight OPTIONS request
+    if (c.req.method === 'OPTIONS') {
+        return c.body(null, 204);
+    }
 
-        if (allAllowed.includes('*') || allAllowed.includes(origin)) {
-            return origin;
-        }
-
-        return null;
-    },
-    credentials: true,
-}));
+    await next();
+});
 
 app.use('*', secureHeaders());
 app.use('*', rateLimiterMiddleware);
