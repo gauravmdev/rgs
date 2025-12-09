@@ -17,22 +17,40 @@ import reportsRoutes from './routes/reports.routes';
 const app = new Hono();
 
 // Global middleware
-app.use('*', secureHeaders());
-app.use('*', rateLimiterMiddleware);
+// Global middleware
+// CORS must be first to handle preflight requests correctly
 app.use('*', cors({
     origin: (origin) => {
+        // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return process.env.NODE_ENV === 'development' ? origin : null;
+
+        // Development localhosts
         if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost:')) {
             return origin;
         }
-        const allowed = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
-        if (allowed.includes('*') || allowed.includes(origin)) {
+
+        // Production Domains (Hardcoded Fallbacks + Env Var)
+        const allowedDomains = [
+            'https://admin.rakhangi.shop',
+            'https://delivery.rakhangi.shop',
+            'https://manager.rakhangi.shop',
+            'https://api.rakhangi.shop'
+        ];
+
+        const envAllowed = process.env.ALLOWED_ORIGINS?.split(',') || [];
+        const allAllowed = [...allowedDomains, ...envAllowed];
+
+        if (allAllowed.includes('*') || allAllowed.includes(origin)) {
             return origin;
         }
+
         return null;
     },
     credentials: true,
 }));
+
+app.use('*', secureHeaders());
+app.use('*', rateLimiterMiddleware);
 
 // Request Logging Middleware
 app.use('*', async (c, next) => {
