@@ -34,10 +34,10 @@ app.use('*', async (c, next) => {
 
     // Check if origin is allowed
     if (origin && (allowedDomains.includes(origin) || process.env.ALLOWED_ORIGINS === '*')) {
-        c.res.headers.set('Access-Control-Allow-Origin', origin);
-        c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-        c.res.headers.set('Access-Control-Allow-Credentials', 'true');
+        c.header('Access-Control-Allow-Origin', origin);
+        c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        c.header('Access-Control-Allow-Credentials', 'true');
     }
 
     // Handle Preflight OPTIONS request
