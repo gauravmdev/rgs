@@ -27,7 +27,7 @@ export default function Reports() {
         reportType: 'sales',
     });
     const [stores, setStores] = useState<any[]>([]);
-    const [summary, setSummary] = useState<any>(null);
+    // const [summary, setSummary] = useState<any>(null);
 
     useEffect(() => {
         fetchStores();
@@ -52,7 +52,7 @@ export default function Reports() {
         setLoading(true);
         try {
             let data: any[] = [];
-            let summaryData: any = {};
+            // let summaryData: any = {};
 
             switch (reportType) {
                 case 'sales':
@@ -78,7 +78,7 @@ export default function Reports() {
             }
 
             setReportData(data);
-            setSummary(summaryData);
+            setReportData(data);
         } catch (error) {
             console.error('Failed to generate report:', error);
         } finally {

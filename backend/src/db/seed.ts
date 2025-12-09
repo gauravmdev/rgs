@@ -184,11 +184,11 @@ async function seed() {
 
                 await db.update(customers)
                     .set({
-                        totalOrders: customer.totalOrders + 1,
-                        totalSales: String(parseFloat(customer.totalSales) + amount),
+                        totalOrders: (customer.totalOrders || 0) + 1,
+                        totalSales: String(parseFloat(customer.totalSales || '0') + amount),
                         totalDues: paymentMethod === 'CUSTOMER_CREDIT'
-                            ? String(parseFloat(customer.totalDues) + amount)
-                            : customer.totalDues,
+                            ? String(parseFloat(customer.totalDues || '0') + amount)
+                            : (customer.totalDues || '0'),
                     })
                     .where(eq(customers.id, customer.id));
             }

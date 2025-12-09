@@ -1,5 +1,5 @@
 import { useEffect, useState, type ElementType } from 'react';
-import { LayoutDashboard, ShoppingCart, Package, DollarSign, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Package, DollarSign, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
 import { getSocket } from '../lib/socket';
@@ -189,10 +189,10 @@ export default function Dashboard() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                                                    order.status === 'OUT_FOR_DELIVERY' ? 'bg-yellow-100 text-yellow-800' :
-                                                        order.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-800' :
-                                                            order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                                                'bg-gray-100 text-gray-800'
+                                                order.status === 'OUT_FOR_DELIVERY' ? 'bg-yellow-100 text-yellow-800' :
+                                                    order.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-800' :
+                                                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                                            'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {order.status.replace('_', ' ')}
                                             </span>

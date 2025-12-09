@@ -37,7 +37,7 @@ export default function Sidebar() {
                     alt="Rakhangi General Stores"
                     className="w-full h-auto mb-2"
                 />
-                <p className="text-sm text-gray-400 mt-1 text-center">Admin Dashboard</p>
+                <p className="text-sm text-gray-400 mt-1 text-center">Admin Portal</p>
             </div>
 
             {/* Navigation */}

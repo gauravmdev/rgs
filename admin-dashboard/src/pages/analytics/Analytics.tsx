@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, DollarSign, Package, Users, Clock, RotateCcw } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Clock, RotateCcw } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
@@ -215,15 +215,16 @@ export default function Analytics() {
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
-                                    data={paymentBreakdown}
-                                    dataKey="totalAmount"
-                                    nameKey="paymentMethod"
+                                    data={paymentBreakdown.map(p => ({ ...p, name: p.paymentMethod, value: p.percentage }))}
                                     cx="50%"
                                     cy="50%"
-                                    outerRadius={100}
-                                    label={(entry) => `${entry.paymentMethod}: ${entry.percentage}%`}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={(entry) => `${entry.name}: ${entry.value}%`}
                                 >
-                                    {paymentBreakdown.map((entry, index) => (
+                                    {paymentBreakdown.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

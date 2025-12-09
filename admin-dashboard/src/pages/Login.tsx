@@ -43,8 +43,8 @@ export default function Login() {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
                         <LogIn className="text-white" size={32} />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">Delivery App</h1>
-                    <p className="text-gray-600 mt-2">Admin Dashboard</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Rakhangi General Stores</h1>
+                    <p className="text-gray-600 mt-2">Admin Portal</p>
                 </div>
 
                 {/* Login Form */}
