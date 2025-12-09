@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, User, Store, Calendar, Truck, Clock } from 'lucide-react';
+import { ArrowLeft, Package, User, Store, Calendar, Truck, Clock, UserPlus, Edit, Trash2, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { formatCurrency, formatDateTime, getStatusColor } from '../lib/utils';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Modal from '../components/Modal';
+import Input from '../components/Input';
 
 export default function OrderDetail() {
     const { id } = useParams<{ id: string }>();
@@ -13,6 +15,21 @@ export default function OrderDetail() {
     const [order, setOrder] = useState<any>(null);
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Modal states
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [deliveryBoys, setDeliveryBoys] = useState<any[]>([]);
+
+    // Form data
+    const [assignFormData, setAssignFormData] = useState({ deliveryPartnerId: '' });
+    const [editFormData, setEditFormData] = useState({
+        invoiceNumber: '',
+        invoiceAmount: '',
+        notes: '',
+        items: [] as { description: string; quantity: number }[],
+    });
 
     useEffect(() => {
         fetchOrderDetails();
@@ -31,6 +48,112 @@ export default function OrderDetail() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchDeliveryBoys = async (storeId: number) => {
+        try {
+            const response = await api.get(`/staff/delivery-boys/${storeId}`);
+            setDeliveryBoys(response.data.deliveryBoys);
+        } catch (error) {
+            console.error('Failed to fetch delivery boys:', error);
+        }
+    };
+
+    const handleAssignOrder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!order) return;
+
+        setSubmitting(true);
+        try {
+            await api.put(`/orders/${order.id}/assign`, {
+                deliveryPartnerId: parseInt(assignFormData.deliveryPartnerId),
+            });
+            toast.success('Order assigned successfully!');
+            setIsAssignModalOpen(false);
+            fetchOrderDetails();
+        } catch (error) {
+            console.error('Failed to assign order:', error);
+            toast.error('Failed to assign order');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleEditOrder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!order) return;
+
+        setSubmitting(true);
+        try {
+            await api.put(`/orders/${order.id}`, {
+                ...editFormData,
+                invoiceAmount: parseFloat(editFormData.invoiceAmount),
+                totalItems: editFormData.items.reduce((sum, item) => sum + item.quantity, 0),
+            });
+            toast.success('Order updated successfully!');
+            setIsEditModalOpen(false);
+            fetchOrderDetails();
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast.error('Failed to update order');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleCancelOrder = async () => {
+        if (!order || !confirm('Are you sure you want to cancel this order?')) return;
+
+        try {
+            await api.post(`/orders/${order.id}/cancel`, {});
+            toast.success('Order cancelled successfully!');
+            fetchOrderDetails();
+        } catch (error) {
+            console.error('Failed to cancel order:', error);
+            toast.error('Failed to cancel order');
+        }
+    };
+
+    const openAssignModalHandler = () => {
+        if (order) {
+            fetchDeliveryBoys(order.storeId);
+            setIsAssignModalOpen(true);
+        }
+    };
+
+    const openEditModalHandler = () => {
+        if (order) {
+            setEditFormData({
+                invoiceNumber: order.invoiceNumber || '',
+                invoiceAmount: order.invoiceAmount.toString(),
+                notes: order.notes || '',
+                items: JSON.parse(JSON.stringify(items)).map((item: any) => ({
+                    description: item.description,
+                    quantity: item.quantity
+                })),
+            });
+            setIsEditModalOpen(true);
+        }
+    };
+
+    const addItem = () => {
+        setEditFormData({
+            ...editFormData,
+            items: [...editFormData.items, { description: '', quantity: 1 }],
+        });
+    };
+
+    const removeItem = (index: number) => {
+        if (editFormData.items.length > 1) {
+            const newItems = editFormData.items.filter((_, i) => i !== index);
+            setEditFormData({ ...editFormData, items: newItems });
+        }
+    };
+
+    const updateItem = (index: number, field: 'description' | 'quantity', value: any) => {
+        const newItems = [...editFormData.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setEditFormData({ ...editFormData, items: newItems });
     };
 
     if (loading) {
@@ -372,17 +495,165 @@ export default function OrderDetail() {
                     <div className="card">
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Actions</h2>
                         <div className="space-y-2">
+                            {order.status === 'CREATED' && (
+                                <>
+                                    <Button className="w-full text-left justify-start" onClick={openAssignModalHandler}>
+                                        <UserPlus size={18} className="mr-2" />
+                                        Assign Delivery Boy
+                                    </Button>
+                                    <Button className="w-full text-left justify-start" variant="secondary" onClick={openEditModalHandler}>
+                                        <Edit size={18} className="mr-2" />
+                                        Edit Order
+                                    </Button>
+                                    <Button className="w-full text-left justify-start" variant="danger" onClick={handleCancelOrder}>
+                                        <XCircle size={18} className="mr-2" />
+                                        Cancel Order
+                                    </Button>
+                                </>
+                            )}
+                            {(order.status === 'ASSIGNED' || order.status === 'OUT_FOR_DELIVERY') && (
+                                <>
+                                    <Button className="w-full text-left justify-start" variant="secondary" onClick={openEditModalHandler}>
+                                        <Edit size={18} className="mr-2" />
+                                        Edit Order
+                                    </Button>
+                                    {order.status === 'ASSIGNED' && (
+                                        <Button className="w-full text-left justify-start" variant="danger" onClick={handleCancelOrder}>
+                                            <XCircle size={18} className="mr-2" />
+                                            Cancel Order
+                                        </Button>
+                                    )}
+                                </>
+                            )}
                             <Button
                                 className="w-full"
                                 variant="secondary"
                                 onClick={() => navigate('/orders')}
                             >
+                                <ArrowLeft size={18} className="mr-2" />
                                 Back to Orders
                             </Button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Assign Modal */}
+            <Modal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                title="Assign Delivery Partner"
+            >
+                <form onSubmit={handleAssignOrder} className="space-y-4">
+                    <div>
+                        <label className="label">Select Delivery Partner *</label>
+                        <select
+                            value={assignFormData.deliveryPartnerId}
+                            onChange={(e) => setAssignFormData({ deliveryPartnerId: e.target.value })}
+                            className="input"
+                            required
+                        >
+                            <option value="">Choose a delivery boy</option>
+                            {deliveryBoys.map((boy) => (
+                                <option key={boy.id} value={boy.id}>
+                                    {boy.name} - {boy.phone}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setIsAssignModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" loading={submitting} disabled={deliveryBoys.length === 0}>
+                            Assign Order
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Order"
+                size="lg"
+            >
+                <form onSubmit={handleEditOrder} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Invoice Number"
+                            value={editFormData.invoiceNumber}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceNumber: e.target.value })}
+                        />
+                        <Input
+                            label="Invoice Amount *"
+                            type="number"
+                            step="0.01"
+                            value={editFormData.invoiceAmount}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceAmount: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="label">Order Items</label>
+                            <Button type="button" size="sm" onClick={addItem}>Add Item</Button>
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editFormData.items.map((item, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        className="input flex-1"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                        required
+                                    />
+                                    <input
+                                        className="input w-24"
+                                        type="number"
+                                        placeholder="Qty"
+                                        value={item.quantity}
+                                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                        min="1"
+                                        required
+                                    />
+                                    {editFormData.items.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeItem(index)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="label">Notes</label>
+                        <textarea
+                            className="input"
+                            rows={3}
+                            value={editFormData.notes}
+                            onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" loading={submitting}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

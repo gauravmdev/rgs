@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Package, User, Store, Calendar, Truck, Clock, UserPlus, CheckCircle, RotateCcw, XCircle, Trash2, Monitor } from 'lucide-react';
+import { ArrowLeft, Package, User, Store, Calendar, Truck, Clock, UserPlus, CheckCircle, RotateCcw, XCircle, Trash2, Monitor, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { formatCurrency, formatDateTime, getStatusColor } from '../../lib/utils';
@@ -47,6 +47,15 @@ export default function OrderDetail() {
         refundAmount: '',
         refundMethod: 'CASH' as 'CASH' | 'CARD' | 'UPI' | 'CUSTOMER_CREDIT',
         reason: '',
+    });
+
+    // Edit Data
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        invoiceNumber: '',
+        invoiceAmount: '',
+        notes: '',
+        items: [] as { description: string; quantity: number }[],
     });
 
     useEffect(() => {
@@ -198,6 +207,63 @@ export default function OrderDetail() {
             });
             setIsReturnModalOpen(true);
         }
+    };
+
+    const openEditModalHandler = () => {
+        if (order) {
+            setEditFormData({
+                invoiceNumber: order.invoiceNumber || '',
+                invoiceAmount: order.invoiceAmount.toString(),
+                notes: order.notes || '',
+                items: JSON.parse(JSON.stringify(items)).map((item: any) => ({
+                    description: item.description,
+                    quantity: item.quantity
+                })),
+            });
+            setIsEditModalOpen(true);
+        }
+    };
+
+    const handleEditOrder = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!order) return;
+
+        setSubmitting(true);
+        try {
+            await api.put(`/orders/${order.id}`, {
+                ...editFormData,
+                invoiceAmount: parseFloat(editFormData.invoiceAmount),
+                totalItems: editFormData.items.reduce((sum, item) => sum + item.quantity, 0),
+            });
+            toast.success('Order updated successfully!');
+            setIsEditModalOpen(false);
+            fetchOrderDetails();
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast.error('Failed to update order');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const addItem = () => {
+        setEditFormData({
+            ...editFormData,
+            items: [...editFormData.items, { description: '', quantity: 1 }],
+        });
+    };
+
+    const removeItem = (index: number) => {
+        if (editFormData.items.length > 1) {
+            const newItems = editFormData.items.filter((_, i) => i !== index);
+            setEditFormData({ ...editFormData, items: newItems });
+        }
+    };
+
+    const updateItem = (index: number, field: 'description' | 'quantity', value: any) => {
+        const newItems = [...editFormData.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setEditFormData({ ...editFormData, items: newItems });
     };
 
     if (loading) {
@@ -559,6 +625,10 @@ export default function OrderDetail() {
                                         <UserPlus size={18} className="mr-2" />
                                         Assign Delivery Boy
                                     </Button>
+                                    <Button className="w-full text-left justify-start" variant="secondary" onClick={openEditModalHandler}>
+                                        <Edit size={18} className="mr-2" />
+                                        Edit Order
+                                    </Button>
                                     <Button className="w-full text-left justify-start" variant="danger" onClick={handleCancelOrder}>
                                         <XCircle size={18} className="mr-2" />
                                         Cancel Order
@@ -572,6 +642,10 @@ export default function OrderDetail() {
                                         <Truck size={18} className="mr-2" />
                                         Mark Out for Delivery
                                     </Button>
+                                    <Button className="w-full text-left justify-start" variant="secondary" onClick={openEditModalHandler}>
+                                        <Edit size={18} className="mr-2" />
+                                        Edit Order
+                                    </Button>
                                     <Button className="w-full text-left justify-start" variant="danger" onClick={handleCancelOrder}>
                                         <XCircle size={18} className="mr-2" />
                                         Cancel Order
@@ -580,10 +654,16 @@ export default function OrderDetail() {
                             )}
 
                             {order.status === 'OUT_FOR_DELIVERY' && (
-                                <Button className="w-full text-left justify-start" variant="success" onClick={() => setIsDeliverModalOpen(true)}>
-                                    <CheckCircle size={18} className="mr-2" />
-                                    Mark Delivered
-                                </Button>
+                                <>
+                                    <Button className="w-full text-left justify-start" variant="success" onClick={() => setIsDeliverModalOpen(true)}>
+                                        <CheckCircle size={18} className="mr-2" />
+                                        Mark Delivered
+                                    </Button>
+                                    <Button className="w-full text-left justify-start" variant="secondary" onClick={openEditModalHandler}>
+                                        <Edit size={18} className="mr-2" />
+                                        Edit Order
+                                    </Button>
+                                </>
                             )}
 
                             {order.status === 'DELIVERED' && (
@@ -767,6 +847,90 @@ export default function OrderDetail() {
                     </div>
                 </form>
             </Modal>
+            {/* Edit Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Order"
+                size="lg"
+            >
+                <form onSubmit={handleEditOrder} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Invoice Number"
+                            value={editFormData.invoiceNumber}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceNumber: e.target.value })}
+                        />
+                        <Input
+                            label="Invoice Amount *"
+                            type="number"
+                            step="0.01"
+                            value={editFormData.invoiceAmount}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceAmount: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="label">Order Items</label>
+                            <Button type="button" size="sm" onClick={addItem}>Add Item</Button>
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editFormData.items.map((item, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        className="input flex-1"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                        required
+                                    />
+                                    <input
+                                        className="input w-24"
+                                        type="number"
+                                        placeholder="Qty"
+                                        value={item.quantity}
+                                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                        min="1"
+                                        required
+                                    />
+                                    {editFormData.items.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeItem(index)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="label">Notes</label>
+                        <textarea
+                            className="input"
+                            rows={3}
+                            value={editFormData.notes}
+                            onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" loading={submitting}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div >
     );
 }
+// Add Edit Modal at the end
+

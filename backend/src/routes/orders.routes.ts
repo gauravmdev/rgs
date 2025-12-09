@@ -324,8 +324,8 @@ orderRoutes.put('/:id', requireStoreManager, async (c) => {
             }
         }
 
-        // Can only edit if status is CREATED or ASSIGNED
-        if (!['CREATED', 'ASSIGNED'].includes(order.status || '')) {
+        // Can only edit if status is CREATED or ASSIGNED or OUT_FOR_DELIVERY
+        if (!['CREATED', 'ASSIGNED', 'OUT_FOR_DELIVERY'].includes(order.status || '')) {
             return c.json({ error: 'Cannot edit order in current status' }, 400);
         }
 
@@ -413,10 +413,10 @@ orderRoutes.delete('/:id', requireAdmin, async (c) => {
 });
 
 /**
- * POST /api/orders/:id/assign
+ * PUT /api/orders/:id/assign
  * Assign delivery partner to order (Store Managers)
  */
-orderRoutes.post('/:id/assign', requireStoreManager, async (c) => {
+orderRoutes.put('/:id/assign', requireStoreManager, async (c) => {
     try {
         const currentUser = getCurrentUser(c);
         const orderId = parseInt(c.req.param('id'));
