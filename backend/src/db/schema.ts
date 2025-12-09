@@ -5,7 +5,7 @@ import { relations, type InferSelectModel, type InferInsertModel } from 'drizzle
 // 1. ENUMS
 // -----------------------------------------------------------------------------
 export const userRoleEnum = pgEnum('user_role', ['ADMIN', 'STORE_MANAGER', 'DELIVERY_BOY', 'CUSTOMER']);
-export const orderSourceEnum = pgEnum('order_source', ['ONLINE', 'WALK_IN', 'CALL_WHATSAPP']);
+// export const orderSourceEnum = pgEnum('order_source', ['ONLINE', 'WALK_IN', 'CALL_WHATSAPP']);
 export const orderStatusEnum = pgEnum('order_status', ['CREATED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED', 'PARTIAL_RETURNED']);
 export const paymentMethodEnum = pgEnum('payment_method', ['CASH', 'CARD', 'UPI', 'CUSTOMER_CREDIT']);
 export const paymentStatusEnum = pgEnum('payment_status', ['PENDING', 'PAID', 'REFUNDED']);
@@ -70,7 +70,7 @@ export const orders = pgTable('orders', {
     orderNumber: varchar('orderNumber', { length: 50 }).notNull().unique(),
     customerId: integer('customerId').references(() => customers.id),
     storeId: integer('storeId').references(() => stores.id),
-    source: orderSourceEnum('source'),
+    // source removed
     status: orderStatusEnum('status').default('CREATED'),
     invoiceNumber: varchar('invoiceNumber', { length: 100 }),
     invoiceAmount: decimal('invoiceAmount', { precision: 10, scale: 2 }).notNull(),
@@ -279,7 +279,7 @@ export type NewReturn = InferInsertModel<typeof returns>;
 export const schema = {
     // Enums
     userRoleEnum,
-    orderSourceEnum,
+    // orderSourceEnum removed
     orderStatusEnum,
     paymentMethodEnum,
     paymentStatusEnum,

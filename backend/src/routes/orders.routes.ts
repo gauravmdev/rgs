@@ -53,7 +53,7 @@ orderRoutes.get('/', async (c) => {
         const customerId = c.req.query('customerId');
         const startDate = c.req.query('startDate');
         const endDate = c.req.query('endDate');
-        const source = c.req.query('source');
+        // source removed
 
         // Build where conditions based on user role
         const conditions: any[] = [];
@@ -83,9 +83,7 @@ orderRoutes.get('/', async (c) => {
         if (customerId) {
             conditions.push(eq(orders.customerId, parseInt(customerId)));
         }
-        if (source) {
-            conditions.push(eq(orders.source, source as any));
-        }
+        // source filter removed
         if (startDate) {
             conditions.push(sql`${orders.createdAt} >= ${new Date(startDate)}`);
         }
@@ -257,7 +255,7 @@ orderRoutes.post('/', async (c) => {
             orderNumber,
             customerId: validated.customerId,
             storeId: finalStoreId, // Use forced storeId
-            source: validated.source,
+            // source removed
             status: 'CREATED',
             invoiceNumber: validated.invoiceNumber || null,
             invoiceAmount: validated.invoiceAmount.toString(),

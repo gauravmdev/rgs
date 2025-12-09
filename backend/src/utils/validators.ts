@@ -33,9 +33,6 @@ export const updateStoreSchema = z.object({
 export const createOrderSchema = z.object({
     customerId: z.number().int().positive('Customer ID is required'),
     storeId: z.number().int().positive('Store ID is required'),
-    source: z.enum(['ONLINE', 'WALK_IN', 'CALL_WHATSAPP'], {
-        errorMap: () => ({ message: 'Invalid order source' }),
-    }),
     invoiceNumber: z.string().optional(),
     invoiceAmount: z.number().positive('Invoice amount must be positive'),
     totalItems: z.number().int().positive('Total items must be positive'),

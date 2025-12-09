@@ -62,7 +62,7 @@ export const cacheService = {
             await this.del(`cache:daily-sales:${storeId}*`);
             await this.del(`cache:weekly-sales:${storeId}*`);
             await this.del(`cache:payment-methods:${storeId}`);
-            await this.del(`cache:order-sources:${storeId}`);
+            // order-sources cache removed
             await this.del(`cache:top-customers:${storeId}*`);
             await this.del(`cache:delivery-performance:${storeId}*`);
         } else {

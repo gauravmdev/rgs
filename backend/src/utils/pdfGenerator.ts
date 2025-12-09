@@ -15,7 +15,7 @@ interface OrderData {
     storeName: string;
     invoiceAmount: number;
     status: string;
-    source: string;
+    // source removed
     createdAt: string;
 }
 
@@ -149,8 +149,8 @@ export async function generateOrdersPDF(
         doc.text('Store', 220, tableTop, { width: 80 });
         doc.text('Amount', 300, tableTop, { width: 60 });
         doc.text('Status', 360, tableTop, { width: 70 });
-        doc.text('Source', 430, tableTop, { width: 60 });
-        doc.text('Date', 490, tableTop, { width: 60 });
+        // source removed
+        doc.text('Date', 430, tableTop, { width: 60 });
 
         doc.moveTo(50, tableTop + 12).lineTo(550, tableTop + 12).stroke();
 
@@ -167,8 +167,8 @@ export async function generateOrdersPDF(
             doc.text(order.storeName, 220, yPosition, { width: 80 });
             doc.text(`₹${order.invoiceAmount.toFixed(2)}`, 300, yPosition, { width: 60 });
             doc.text(order.status, 360, yPosition, { width: 70 });
-            doc.text(order.source, 430, yPosition, { width: 60 });
-            doc.text(new Date(order.createdAt).toLocaleDateString(), 490, yPosition, { width: 60 });
+            // source removed
+            doc.text(new Date(order.createdAt).toLocaleDateString(), 430, yPosition, { width: 60 });
             yPosition += 15;
         });
 

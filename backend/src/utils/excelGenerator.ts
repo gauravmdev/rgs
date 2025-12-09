@@ -14,7 +14,7 @@ interface OrderData {
     storeName: string;
     invoiceAmount: number;
     status: string;
-    source: string;
+    // source removed
     createdAt: string;
 }
 
@@ -160,7 +160,7 @@ export async function generateOrdersExcel(
     // Table Header
     row += 2;
     const headerRow = worksheet.getRow(row);
-    headerRow.values = ['Order #', 'Customer', 'Store', 'Amount', 'Status', 'Source', 'Date'];
+    headerRow.values = ['Order #', 'Customer', 'Store', 'Amount', 'Status', 'Date'];
     headerRow.font = { bold: true };
     headerRow.fill = {
         type: 'pattern',
@@ -177,8 +177,9 @@ export async function generateOrdersExcel(
             order.customerName,
             order.storeName,
             order.invoiceAmount,
+            order.invoiceAmount,
             order.status,
-            order.source,
+            // source removed
             new Date(order.createdAt).toLocaleDateString()
         ];
         dataRow.getCell(4).numFmt = '₹#,##0.00';

@@ -147,14 +147,14 @@ async function seed() {
         // 6. Create Sample Orders
         console.log('📦 Creating sample orders...');
         const orderStatuses = ['CREATED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
-        const sources = ['ONLINE', 'WALK_IN', 'CALL_WHATSAPP'];
+        // source array removed
         const paymentMethods = ['CASH', 'CARD', 'UPI', 'CUSTOMER_CREDIT'];
 
         for (let i = 1; i <= 20; i++) {
             const customerIndex = Math.floor(Math.random() * customerData.length);
             const { customer } = customerData[customerIndex];
             const status = orderStatuses[Math.floor(Math.random() * orderStatuses.length)] as any;
-            const source = sources[Math.floor(Math.random() * sources.length)] as any;
+            // source removed
             const amount = Math.floor(Math.random() * 180) + 20;
             const itemCount = Math.floor(Math.random() * 4) + 2;
 
@@ -197,7 +197,7 @@ async function seed() {
                 orderNumber,
                 customerId: customer.id,
                 storeId: customer.storeId,
-                source,
+                // source removed
                 status,
                 invoiceNumber: `INV-${i}`,
                 invoiceAmount: String(amount),

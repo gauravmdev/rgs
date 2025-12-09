@@ -3,7 +3,7 @@ import { Plus, Eye, UserPlus, XCircle, RotateCcw, Trash2, Truck, CheckCircle } f
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
-import { formatCurrency, formatDate, getStatusColor, getSourceColor } from '../../lib/utils';
+import { formatCurrency, formatDate, getStatusColor } from '../../lib/utils';
 import { getSocket } from '../../lib/socket';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
@@ -27,13 +27,14 @@ export default function OrdersList() {
     // Filters
     const [filterStatus, setFilterStatus] = useState('');
     const [filterStore, setFilterStore] = useState('');
-    const [filterSource, setFilterSource] = useState('');
+
+    // filterSource removed
 
     // Create form
     const [createFormData, setCreateFormData] = useState({
         customerId: '',
         storeId: '',
-        source: 'WALK_IN' as 'ONLINE' | 'WALK_IN' | 'CALL_WHATSAPP',
+        // source removed
         invoiceNumber: '',
         invoiceAmount: '',
         totalItems: '',
@@ -98,7 +99,7 @@ export default function OrdersList() {
                 socket.off('order-returned');
             }
         };
-    }, [filterStatus, filterStore, filterSource]);
+    }, [filterStatus, filterStore]);
 
     const handleOrderUpdate = () => {
         fetchOrders();
@@ -128,7 +129,7 @@ export default function OrdersList() {
             let url = '/orders?limit=100';
             if (filterStatus) url += `&status=${filterStatus}`;
             if (filterStore) url += `&storeId=${filterStore}`;
-            if (filterSource) url += `&source=${filterSource}`;
+            // source filter removed
 
             const response = await api.get(url);
             setOrders(response.data.orders);
@@ -157,7 +158,7 @@ export default function OrdersList() {
             const payload = {
                 customerId: parseInt(createFormData.customerId),
                 storeId: parseInt(createFormData.storeId),
-                source: createFormData.source,
+                // source removed
                 invoiceNumber: createFormData.invoiceNumber,
                 invoiceAmount: parseFloat(createFormData.invoiceAmount),
                 totalItems: parseInt(createFormData.totalItems),
@@ -353,7 +354,7 @@ export default function OrdersList() {
         setCreateFormData({
             customerId: '',
             storeId: '',
-            source: 'WALK_IN',
+            // source removed
             invoiceNumber: '',
             invoiceAmount: '',
             totalItems: '',
@@ -453,15 +454,7 @@ export default function OrdersList() {
                             ))}
                         </select>
                     </div>
-                    <div>
-                        <label className="label">Source</label>
-                        <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="input">
-                            <option value="">All Sources</option>
-                            <option value="ONLINE">Online</option>
-                            <option value="WALK_IN">Walk-in</option>
-                            <option value="CALL_WHATSAPP">Call/WhatsApp</option>
-                        </select>
-                    </div>
+                    {/* Source filter removed */}
                 </div>
             </div>
 
@@ -475,7 +468,7 @@ export default function OrdersList() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                                {/* source header removed */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -501,11 +494,7 @@ export default function OrdersList() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {formatCurrency(order.invoiceAmount)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSourceColor(order.source)}`}>
-                                            {order.source}
-                                        </span>
-                                    </td>
+                                    {/* source cell removed */}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                                             {order.status.replace('_', ' ')}
@@ -787,20 +776,6 @@ export default function OrdersList() {
                                  Wait, if I create a new customer, I pick the store THEN.
                                  So mainly, store is derived.
                             */}
-
-                            <div>
-                                <label className="label">Order Source *</label>
-                                <select
-                                    value={createFormData.source}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, source: e.target.value as any })}
-                                    className="input"
-                                    required
-                                >
-                                    <option value="ONLINE">Online</option>
-                                    <option value="WALK_IN">Walk-in</option>
-                                    <option value="CALL_WHATSAPP">Call/WhatsApp</option>
-                                </select>
-                            </div>
 
                             {/* ... Rest of the form inputs same as before ... */}
                             <Input
@@ -1130,6 +1105,6 @@ export default function OrdersList() {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 }

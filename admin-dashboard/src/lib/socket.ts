@@ -19,11 +19,19 @@ export const connectSocket = (storeId?: number, isAdmin?: boolean) => {
 
     // Create new connection
     console.log('🔌 Creating new socket connection...');
-    socket = io('http://localhost:3000', {
+
+    // Get headers from env or default
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    // Remove /api from the end to get the root URL for socket.io
+    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+
+    socket = io(socketUrl, {
         autoConnect: true,
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: 5,
+        path: '/socket.io/', // Ensure this matches backend default
+        transports: ['websocket', 'polling']
     });
 
     socket.on('connect', () => {

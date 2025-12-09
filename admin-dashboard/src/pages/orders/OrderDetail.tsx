@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Package, User, Store, Calendar, Truck, Clock, UserPlus, CheckCircle, RotateCcw, XCircle, Trash2, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
-import { formatCurrency, formatDateTime, getStatusColor, getSourceColor } from '../../lib/utils';
+import { formatCurrency, formatDateTime, getStatusColor } from '../../lib/utils';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
@@ -288,15 +288,7 @@ export default function OrderDetail() {
                                 </div>
                             </div>
 
-                            <div className="flex items-start space-x-3">
-                                <Package className="text-primary-600 mt-1" size={20} />
-                                <div>
-                                    <p className="text-sm text-gray-600">Source</p>
-                                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getSourceColor(order.source)}`}>
-                                        {order.source}
-                                    </span>
-                                </div>
-                            </div>
+
 
                             {order.invoiceNumber && (
                                 <div className="flex items-start space-x-3">

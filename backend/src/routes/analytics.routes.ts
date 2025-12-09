@@ -535,59 +535,6 @@ analyticsRoutes.get('/payment-methods', async (c) => {
     }
 });
 
-/**
- * GET /api/analytics/order-sources
- * Order source breakdown
- */
-analyticsRoutes.get('/order-sources', async (c) => {
-    try {
-        const currentUser = getCurrentUser(c);
-        const storeIdParam = c.req.query('storeId');
-
-        // Determine store
-        let storeId: number | undefined;
-        if (currentUser.role === 'ADMIN') {
-            storeId = storeIdParam ? parseInt(storeIdParam) : undefined;
-        } else if (currentUser.storeId) {
-            storeId = currentUser.storeId;
-        }
-
-        // Cache key
-        const cacheKey = `cache:order-sources:${storeId || 'all'}`;
-        const cached = await cacheService.get(cacheKey);
-        if (cached) {
-            return c.json(cached);
-        }
-
-        const sourceData = await db
-            .select({
-                source: orders.source,
-                count: count(),
-                totalSales: sql<string>`COALESCE(SUM(CASE WHEN ${orders.status} IN ('DELIVERED', 'RETURNED', 'PARTIAL_RETURNED') THEN CAST(${orders.invoiceAmount} AS DECIMAL) ELSE 0 END), 0)`,
-            })
-            .from(orders)
-            .where(storeId ? eq(orders.storeId, storeId) : undefined)
-            .groupBy(orders.source);
-
-        const total = sourceData.reduce((sum, row) => sum + row.count, 0);
-
-        const result = {
-            sourceBreakdown: sourceData.map(row => ({
-                source: row.source,
-                count: row.count,
-                totalSales: parseFloat(row.totalSales || '0'),
-                percentage: total > 0 ? Math.round((row.count / total) * 100) : 0,
-            })),
-        };
-
-        // Cache for 5 minutes
-        await cacheService.set(cacheKey, result, 300);
-
-        return c.json(result);
-    } catch (error: any) {
-        console.error('Order sources error:', error);
-        throw error;
-    }
-});
+// GET /api/analytics/order-sources route removed
 
 export default analyticsRoutes;

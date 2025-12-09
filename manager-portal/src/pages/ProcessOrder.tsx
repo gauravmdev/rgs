@@ -32,7 +32,7 @@ export default function ProcessOrder() {
         customerId: '',
         customerPhone: '',
         storeId: user?.storeId?.toString() || '',
-        source: 'WALK_IN' as 'WALK_IN' | 'ONLINE' | 'CALL_WHATSAPP',
+        // source removed
         invoiceNumber: '',
         invoiceAmount: '',
         items: [{ description: '', quantity: 1 }] as OrderItem[],
@@ -183,7 +183,7 @@ export default function ProcessOrder() {
             const payload = {
                 customerId: parseInt(formData.customerId, 10),
                 storeId: parseInt(user.storeId.toString(), 10),
-                source: formData.source,
+                // source removed
                 // Send undefined if empty string to match optional() better
                 invoiceNumber: formData.invoiceNumber || undefined,
                 invoiceAmount: parseFloat(formData.invoiceAmount) || 0,
@@ -369,20 +369,7 @@ export default function ProcessOrder() {
 
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="label">Order Source *</label>
-                                <select
-                                    value={formData.source}
-                                    onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
-                                    className="input"
-                                    required
-                                >
-                                    <option value="WALK_IN">Walk-in</option>
-                                    <option value="ONLINE">Online</option>
-                                    <option value="CALL_WHATSAPP">Call/WhatsApp</option>
-                                </select>
-                            </div>
-
+                            {/* Source select removed */}
                             <Input
                                 label="Invoice Number"
                                 value={formData.invoiceNumber}

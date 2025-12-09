@@ -139,7 +139,7 @@ reportsRoutes.get('/orders', async (c) => {
             storeName: order.store?.name || 'Unknown',
             invoiceAmount: Number(order.invoiceAmount),
             status: order.status || 'CREATED',
-            source: order.source || 'WALK_IN',
+            // source removed
             createdAt: (order.createdAt || new Date()).toISOString()
         }));
 

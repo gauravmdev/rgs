@@ -166,11 +166,7 @@ export default function LiveOrders() {
                 </div>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-gray-200">
-                <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                    {order.source}
-                </span>
-            </div>
+
         </div>
     );
 

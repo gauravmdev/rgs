@@ -48,7 +48,7 @@ export interface Order {
     customerName: string;
     storeId: number;
     storeName: string;
-    source: 'ONLINE' | 'WALK_IN' | 'CALL_WHATSAPP';
+    // source removed
     status: 'CREATED' | 'ASSIGNED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'RETURNED' | 'PARTIAL_RETURNED';
     invoiceNumber?: string;
     invoiceAmount: number;
