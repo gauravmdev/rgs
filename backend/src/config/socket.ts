@@ -10,6 +10,14 @@ export const initializeSocket = (server: any) => {
     const pubClient = new Redis(redisUrl);
     const subClient = pubClient.duplicate();
 
+    pubClient.on('error', (err) => {
+        console.error('❌ Socket.IO Pub Client Error:', err);
+    });
+
+    subClient.on('error', (err) => {
+        console.error('❌ Socket.IO Sub Client Error:', err);
+    });
+
     io = new Server(server, {
         cors: {
             origin: process.env.ALLOWED_ORIGINS?.split(',') || ['*'],
