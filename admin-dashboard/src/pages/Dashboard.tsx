@@ -2,7 +2,7 @@ import { useEffect, useState, type ElementType } from 'react';
 import { ShoppingCart, Package, DollarSign, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
-import { getSocket, connectSocket } from '../lib/socket';
+import { connectSocket } from '../lib/socket';
 import { formatCurrency } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import type { DashboardStats, Order } from '../types';
