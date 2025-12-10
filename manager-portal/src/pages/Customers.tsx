@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Plus, Eye, DollarSign } from 'lucide-react';
+import { Users, Search, Plus, Eye, DollarSign, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
@@ -17,13 +17,13 @@ export default function Customers() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
         email: '',
-        password: '',
         address: '',
         apartment: '',
     });
@@ -51,26 +51,50 @@ export default function Customers() {
         }
     };
 
-    const handleCreateCustomer = async (e: React.FormEvent) => {
+    const handleSaveCustomer = async (e: React.FormEvent) => {
         e.preventDefault();
 
         setSubmitting(true);
         try {
-            await api.post('/customers', {
-                ...formData,
-                storeId: user?.storeId, // IMPORTANT: Always assign to manager's store
-            });
+            if (editingId) {
+                // Update existing customer
+                await api.put(`/customers/${editingId}`, {
+                    name: formData.name,
+                    phone: formData.phone,
+                    address: formData.address,
+                    apartment: formData.apartment,
+                });
+                toast.success('Customer updated successfully!');
+            } else {
+                // Create new customer
+                await api.post('/customers', {
+                    ...formData,
+                    storeId: user?.storeId, // IMPORTANT: Always assign to manager's store
+                });
+                toast.success('Customer created successfully!');
+            }
 
-            toast.success('Customer created successfully!');
             setIsCreateModalOpen(false);
             resetForm();
             fetchCustomers();
         } catch (error: any) {
-            console.error('Failed to create customer:', error);
-            toast.error(error.response?.data?.error || 'Failed to create customer');
+            console.error('Failed to save customer:', error);
+            toast.error(error.response?.data?.error || 'Failed to save customer');
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleEditClick = (customer: any) => {
+        setFormData({
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email || '',
+            address: customer.address || '',
+            apartment: customer.apartment || '',
+        });
+        setEditingId(customer.id);
+        setIsCreateModalOpen(true);
     };
 
     const resetForm = () => {
@@ -78,10 +102,10 @@ export default function Customers() {
             name: '',
             phone: '',
             email: '',
-            password: '',
             address: '',
             apartment: '',
         });
+        setEditingId(null);
     };
 
     const filteredCustomers = customers.filter((customer) =>
@@ -98,7 +122,10 @@ export default function Customers() {
                     <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
                     <p className="text-gray-600 mt-1">Manage customers for {user?.storeName}</p>
                 </div>
-                <Button onClick={() => setIsCreateModalOpen(true)}>
+                <Button onClick={() => {
+                    resetForm();
+                    setIsCreateModalOpen(true);
+                }}>
                     <Plus size={20} className="mr-2" />
                     Add Customer
                 </Button>
@@ -223,7 +250,14 @@ export default function Customers() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {formatDateTime(customer.createdAt)}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            <button
+                                                onClick={() => handleEditClick(customer)}
+                                                className="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                            >
+                                                <Pencil size={16} className="mr-1" />
+                                                Edit
+                                            </button>
                                             <button
                                                 onClick={() => navigate(`/customers/${customer.id}`)}
                                                 className="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
@@ -240,16 +274,16 @@ export default function Customers() {
                 )}
             </div>
 
-            {/* Create Customer Modal */}
+            {/* Create/Edit Customer Modal */}
             <Modal
                 isOpen={isCreateModalOpen}
                 onClose={() => {
                     setIsCreateModalOpen(false);
                     resetForm();
                 }}
-                title="Add New Customer"
+                title={editingId ? "Edit Customer" : "Add New Customer"}
             >
-                <form onSubmit={handleCreateCustomer} className="space-y-4">
+                <form onSubmit={handleSaveCustomer} className="space-y-4">
                     <Input
                         label="Customer Name *"
                         value={formData.name}
@@ -268,15 +302,8 @@ export default function Customers() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                    />
-                    <Input
-                        label="Password *"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        required
-                        placeholder="Min. 6 characters"
+                        disabled={!!editingId}
+                        placeholder={editingId ? "Email cannot be changed" : ""}
                     />
                     <Input
                         label="Address"
@@ -291,9 +318,11 @@ export default function Customers() {
                         placeholder="Apt 5B, Tower A"
                     />
 
-                    <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-                        Customer will be added to <strong>{user?.storeName}</strong>
-                    </div>
+                    {!editingId && (
+                        <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                            Customer will be added to <strong>{user?.storeName}</strong>
+                        </div>
+                    )}
 
                     <div className="flex gap-2 pt-4">
                         <Button
@@ -308,7 +337,7 @@ export default function Customers() {
                             Cancel
                         </Button>
                         <Button type="submit" loading={submitting} className="flex-1">
-                            Create Customer
+                            {editingId ? "Update Customer" : "Create Customer"}
                         </Button>
                     </div>
                 </form>

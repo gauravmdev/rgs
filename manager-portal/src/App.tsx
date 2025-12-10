@@ -10,6 +10,7 @@ import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import LiveOrders from './pages/LiveOrders';
 import OrderDetail from './pages/OrderDetail';
+import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -101,6 +102,17 @@ function App() {
         />
 
 
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/analytics"

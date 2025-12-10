@@ -90,7 +90,7 @@ auth.post('/login', async (c) => {
 
         // Check if user is active
         if (!user.isActive) {
-            return c.json({ error: 'Account is disabled' }, 403);
+            return c.json({ error: 'Your account has been disabled. Please contact Admin' }, 403);
         }
 
         // Verify password

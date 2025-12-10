@@ -17,7 +17,6 @@ interface CustomerFormData {
     name: string;
     phone: string;
     email: string;
-    password: string;
     address: string;
     apartment: string;
 }
@@ -48,27 +47,10 @@ export default function ProcessOrder() {
         name: '',
         phone: '',
         email: '',
-        password: '',
         address: '',
         apartment: '',
     });
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-
-    // Initial fetch of customers
-    useEffect(() => {
-        fetchInitialCustomers();
-    }, []);
-
-    const fetchInitialCustomers = async () => {
-        try {
-            const response = await api.get(`/customers?storeId=${user?.storeId}&limit=10`);
-            if (response.data.customers.length > 0) {
-                setSearchResults(response.data.customers);
-            }
-        } catch (error) {
-            console.error('Failed to fetch initial customers:', error);
-        }
-    };
 
     // Automatic search with debouncing
     useEffect(() => {
@@ -76,8 +58,7 @@ export default function ProcessOrder() {
             if (searchPhone && searchPhone.trim().length >= 2) {
                 handleSearchCustomer();
             } else if (searchPhone.trim().length === 0) {
-                // Reset to initial customers when search is cleared
-                fetchInitialCustomers();
+                setSearchResults([]);
             }
         }, 500); // 500ms debounce
 
@@ -115,10 +96,15 @@ export default function ProcessOrder() {
         e.preventDefault();
 
         try {
-            const response = await api.post('/customers', {
+            const payload: any = {
                 ...customerFormData,
                 storeId: user?.storeId,
-            });
+            };
+
+            // Clean up empty email to avoid unique constraint issues if backend doesn't handle '' well
+            if (!payload.email) delete payload.email;
+
+            const response = await api.post('/customers', payload);
 
             const newCustomer = response.data.customer;
             setSelectedCustomer(newCustomer);
@@ -235,7 +221,7 @@ export default function ProcessOrder() {
                                     <div className="relative flex-1">
                                         <input
                                             type="text"
-                                            placeholder="Search by name, phone, or email..."
+                                            placeholder="Search by name, phone, email, or apartment..."
                                             value={searchPhone}
                                             onChange={(e) => setSearchPhone(e.target.value)}
                                             className="input pr-10"
@@ -350,7 +336,6 @@ export default function ProcessOrder() {
                                         setFormData({ ...formData, customerId: '' });
                                         setSearchPhone('');
                                         setSearchResults([]);
-                                        fetchInitialCustomers(); // Reload the list
                                     }}
                                 >
                                     Change
@@ -490,15 +475,6 @@ export default function ProcessOrder() {
                         type="email"
                         value={customerFormData.email}
                         onChange={(e) => setCustomerFormData({ ...customerFormData, email: e.target.value })}
-                        required
-                    />
-                    <Input
-                        label="Password *"
-                        type="password"
-                        value={customerFormData.password}
-                        onChange={(e) => setCustomerFormData({ ...customerFormData, password: e.target.value })}
-                        required
-                        placeholder="Min. 6 characters"
                     />
                     <Input
                         label="Address *"

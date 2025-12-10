@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Eye, UserPlus, Search, XCircle, RotateCcw, Truck, CheckCircle } from 'lucide-react';
+import { Package, Eye, UserPlus, Search, XCircle, RotateCcw, Truck, CheckCircle, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { getSocket, connectSocket } from '../lib/socket';
@@ -29,6 +29,15 @@ export default function Orders() {
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [selectedDeliveryBoy, setSelectedDeliveryBoy] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    // Edit modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        invoiceNumber: '',
+        invoiceAmount: '',
+        notes: '',
+        items: [] as any[],
+    });
 
     // Deliver modal
     const [isDeliverModalOpen, setIsDeliverModalOpen] = useState(false);
@@ -109,6 +118,63 @@ export default function Orders() {
         }
     };
 
+    const handleEditOrder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedOrder) return;
+
+        setSubmitting(true);
+        try {
+            await api.put(`/orders/${selectedOrder.id}`, {
+                ...editFormData,
+                invoiceAmount: parseFloat(editFormData.invoiceAmount),
+                totalItems: editFormData.items.reduce((sum, item) => sum + item.quantity, 0),
+            });
+            toast.success('Order updated successfully!');
+            setIsEditModalOpen(false);
+            setSelectedOrder(null);
+            fetchOrders();
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast.error('Failed to update order');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const openEditModal = (order: any) => {
+        setSelectedOrder(order);
+        setEditFormData({
+            invoiceNumber: order.invoiceNumber || '',
+            invoiceAmount: order.invoiceAmount.toString(),
+            notes: order.notes || '',
+            items: order.items ? JSON.parse(JSON.stringify(order.items)).map((item: any) => ({
+                description: item.description,
+                quantity: item.quantity
+            })) : [],
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const addEditItem = () => {
+        setEditFormData({
+            ...editFormData,
+            items: [...editFormData.items, { description: '', quantity: 1 }],
+        });
+    };
+
+    const removeEditItem = (index: number) => {
+        if (editFormData.items.length > 1) {
+            const newItems = editFormData.items.filter((_, i) => i !== index);
+            setEditFormData({ ...editFormData, items: newItems });
+        }
+    };
+
+    const updateEditItem = (index: number, field: 'description' | 'quantity', value: any) => {
+        const newItems = [...editFormData.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setEditFormData({ ...editFormData, items: newItems });
+    };
+
     const handleAssignOrder = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -119,8 +185,8 @@ export default function Orders() {
 
         setSubmitting(true);
         try {
-            // Correct endpoint: POST /orders/:id/assign
-            await api.post(`/orders/${selectedOrder.id}/assign`, {
+            // Correct endpoint: DOST /orders/:id/assign -> PUT
+            await api.put(`/orders/${selectedOrder.id}/assign`, {
                 deliveryPartnerId: parseInt(selectedDeliveryBoy),
             });
 
@@ -418,6 +484,19 @@ export default function Orders() {
                                                 >
                                                     <Eye size={18} />
                                                 </button>
+
+                                                {(order.status === 'CREATED' || order.status === 'ASSIGNED' || order.status === 'OUT_FOR_DELIVERY') && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openEditModal(order);
+                                                        }}
+                                                        className="text-blue-600 hover:text-blue-900"
+                                                        title="Edit Order"
+                                                    >
+                                                        <Edit size={18} />
+                                                    </button>
+                                                )}
 
                                                 {order.status === 'CREATED' && (
                                                     <>
@@ -724,6 +803,89 @@ export default function Orders() {
                         </Button>
                         <Button type="submit" loading={submitting} className="flex-1 bg-red-600 hover:bg-red-700">
                             Process Return
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Order"
+                size="lg"
+            >
+                <form onSubmit={handleEditOrder} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Invoice Number"
+                            value={editFormData.invoiceNumber}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceNumber: e.target.value })}
+                        />
+                        <Input
+                            label="Invoice Amount *"
+                            type="number"
+                            step="0.01"
+                            value={editFormData.invoiceAmount}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceAmount: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="label">Order Items</label>
+                            <Button type="button" size="sm" onClick={addEditItem}>Add Item</Button>
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editFormData.items.map((item, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        className="input flex-1"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateEditItem(index, 'description', e.target.value)}
+                                        required
+                                    />
+                                    <input
+                                        className="input w-24"
+                                        type="number"
+                                        placeholder="Qty"
+                                        value={item.quantity}
+                                        onChange={(e) => updateEditItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                        min="1"
+                                        required
+                                    />
+                                    {editFormData.items.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeEditItem(index)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="label">Notes</label>
+                        <textarea
+                            className="input"
+                            rows={3}
+                            value={editFormData.notes}
+                            onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" loading={submitting}>
+                            Save Changes
                         </Button>
                     </div>
                 </form>

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Ban, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import Button from '../../components/ui/Button';
@@ -239,7 +239,20 @@ export default function StaffList() {
             console.error('Failed to delete staff:', error);
             if (error.response?.data?.pendingDeliveriesCount) {
                 toast.error(`Cannot delete delivery boy with ${error.response.data.pendingDeliveriesCount} pending deliveries`);
+            } else {
+                toast.error('Failed to delete staff');
             }
+        }
+    };
+
+    const handleToggleStatus = async (id: number, isActive: boolean) => {
+        try {
+            await api.patch(`/staff/${id}/status`, { isActive });
+            toast.success(`Staff member ${isActive ? 'activated' : 'deactivated'} successfully`);
+            fetchStaff();
+        } catch (error: any) {
+            console.error('Failed to update staff status:', error);
+            toast.error('Failed to update staff status');
         }
     };
 
@@ -373,6 +386,13 @@ export default function StaffList() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => handleToggleStatus(staffMember.id, !staffMember.isActive)}
+                                                className={`${staffMember.isActive ? 'text-amber-600 hover:text-amber-900' : 'text-green-600 hover:text-green-900'}`}
+                                                title={staffMember.isActive ? 'Deactivate' : 'Activate'}
+                                            >
+                                                {staffMember.isActive ? <Ban size={18} /> : <CheckCircle size={18} />}
+                                            </button>
                                             <button
                                                 onClick={() => handleOpenModal(staffMember)}
                                                 className="text-primary-600 hover:text-primary-900"

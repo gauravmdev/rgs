@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
@@ -40,10 +39,11 @@ export default function Login() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
-                        <LogIn className="text-white" size={32} />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900">Rakhangi General Stores</h1>
+                    <img
+                        src="/logo.png"
+                        alt="Rakhangi General Stores"
+                        className="h-20 mx-auto mb-4"
+                    />
                     <p className="text-gray-600 mt-2">Admin Portal</p>
                 </div>
 

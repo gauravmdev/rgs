@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq, and, or, like, ilike, desc, sql, count } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { db } from '../config/database';
-import { users, customers, orders, dueClearances } from '../db/schema';
+import { users, customers, orders, dueClearances, deliveries, returns, orderItems, stores } from '../db/schema';
 import { authMiddleware, getCurrentUser } from '../middleware/auth.middleware';
 import { requireAdmin, requireStoreManager } from '../middleware/role.middleware';
 import { createCustomerSchema, updateCustomerSchema, clearDuesSchema } from '../utils/validators';
@@ -24,66 +24,74 @@ customerRoutes.get('/', async (c) => {
         const offset = (page - 1) * limit;
         const search = c.req.query('search');
 
-        // Build where conditions
+        // Base query
+        const baseQuery = db
+            .select({
+                customer: customers,
+                user: users,
+                store: stores,
+            })
+            .from(customers)
+            .innerJoin(users, eq(customers.userId, users.id))
+            .leftJoin(stores, eq(customers.storeId, stores.id))
+            .where(eq(users.role, 'CUSTOMER'));
+
+        // Apply filters
         const conditions = [eq(users.role, 'CUSTOMER')];
 
-        // If Store Manager, limit to their store
+        // Store filter
         if (currentUser.role === 'STORE_MANAGER' && currentUser.storeId) {
-            conditions.push(eq(users.storeId, currentUser.storeId));
+            conditions.push(eq(customers.storeId, currentUser.storeId));
         }
 
-        // Search by name, phone, or email (case-insensitive)
+        // Search filter (name, phone, email, apartment)
         if (search) {
+            console.log(`Searching customers for store ${currentUser.role === 'STORE_MANAGER' ? currentUser.storeId : 'all'} with term:`, search);
             conditions.push(
                 or(
                     ilike(users.name, `%${search}%`),
                     ilike(users.phone, `%${search}%`),
-                    ilike(users.email, `%${search}%`)
+                    ilike(users.email, `%${search}%`),
+                    ilike(customers.apartment, `%${search}%`)
                 )!
             );
         }
 
-        const customersList = await db.query.users.findMany({
-            where: and(...conditions),
-            with: {
-                customerProfiles: {
-                    with: {
-                        store: true,
-                    }
-                },
-            },
-            columns: {
-                password: false,
-            },
-            limit,
-            offset,
-            orderBy: desc(users.createdAt),
-        });
+        const results = await db
+            .select({
+                customer: customers,
+                user: users,
+                store: stores,
+            })
+            .from(customers)
+            .innerJoin(users, eq(customers.userId, users.id))
+            .leftJoin(stores, eq(customers.storeId, stores.id))
+            .where(and(...conditions))
+            .limit(limit)
+            .offset(offset)
+            .orderBy(desc(customers.createdAt));
 
-        // Flatten the structure for the response
-        const formattedCustomers = customersList.map(user => {
-            const profile = user.customerProfiles[0];
-            return {
-                id: profile?.id,
-                userId: user.id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                storeId: user.storeId,
-                storeName: profile?.store?.name,
-                totalDues: parseFloat(profile?.totalDues || '0'),
-                totalOrders: profile?.totalOrders || 0,
-                totalSales: parseFloat(profile?.totalSales || '0'),
-                apartment: profile?.apartment,
-                address: profile?.address,
-                isActive: user.isActive,
-                createdAt: user.createdAt,
-            };
-        }).filter(c => c.id); // Ensure only users with customer profiles
+        const formattedCustomers = results.map(({ customer, user, store }) => ({
+            id: customer.id,
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            storeId: customer.storeId,
+            storeName: store?.name,
+            totalDues: parseFloat(customer.totalDues || '0'),
+            totalOrders: customer.totalOrders,
+            totalSales: parseFloat(customer.totalSales || '0'),
+            apartment: customer.apartment,
+            address: customer.address,
+            isActive: user.isActive,
+            createdAt: user.createdAt,
+        }));
 
         const [totalCount] = await db
             .select({ count: count() })
-            .from(users)
+            .from(customers)
+            .innerJoin(users, eq(customers.userId, users.id))
             .where(and(...conditions));
 
         return c.json({
@@ -190,23 +198,28 @@ customerRoutes.post('/', async (c) => {
             return c.json({ error: 'Store ID is required' }, 400);
         }
 
-        // Check if email already exists
-        const existingUser = await db.query.users.findFirst({
-            where: eq(users.email, validated.email),
-        });
+        // Check if email already exists (only if provided)
+        if (validated.email) {
+            const existingUser = await db.query.users.findFirst({
+                where: eq(users.email, validated.email),
+            });
 
-        if (existingUser) {
-            return c.json({ error: 'Email already registered' }, 409);
+            if (existingUser) {
+                return c.json({ error: 'Email already registered' }, 409);
+            }
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(validated.password, 10);
+        // Hash password if provided
+        let hashedPassword = null;
+        if (validated.password) {
+            hashedPassword = await bcrypt.hash(validated.password, 10);
+        }
 
         // Transaction to create user and customer profile
         const result = await db.transaction(async (tx) => {
             // 1. Create User
             const [newUser] = await tx.insert(users).values({
-                email: validated.email,
+                email: validated.email || null,
                 password: hashedPassword,
                 name: validated.name,
                 role: 'CUSTOMER',
@@ -413,17 +426,46 @@ customerRoutes.delete('/:id', async (c) => {
             return c.json({ error: 'Customer not found' }, 404);
         }
 
+        const force = c.req.query('force') === 'true';
+
         // Check if customer has orders
-        const customerOrders = await db.query.orders.findFirst({
+        const customerOrders = await db.query.orders.findMany({
             where: eq(orders.customerId, customerId),
         });
 
-        if (customerOrders) {
-            return c.json({ error: 'Cannot delete customer with existing orders' }, 400);
+        if (customerOrders.length > 0 && !force) {
+            return c.json({
+                error: 'Customer has associated orders',
+                code: 'HAS_ORDERS',
+                orderCount: customerOrders.length
+            }, 409);
         }
 
-        // Transaction to delete customer profile and user
+        // Transaction to delete customer profile, user and potentially orders
         await db.transaction(async (tx) => {
+            if (force && customerOrders.length > 0) {
+                // Delete all deliveries associated with these orders
+                for (const order of customerOrders) {
+                    await tx.delete(deliveries).where(eq(deliveries.orderId, order.id));
+                }
+
+                // Delete all returns associated with these orders
+                for (const order of customerOrders) {
+                    await tx.delete(returns).where(eq(returns.orderId, order.id));
+                }
+
+                // Delete all order items associated with these orders
+                for (const order of customerOrders) {
+                    await tx.delete(orderItems).where(eq(orderItems.orderId, order.id));
+                }
+
+                // Delete all orders
+                await tx.delete(orders).where(eq(orders.customerId, customerId));
+
+                // Also delete due clearances
+                await tx.delete(dueClearances).where(eq(dueClearances.customerId, customerId));
+            }
+
             await tx.delete(customers).where(eq(customers.id, customerId));
             if (customer.userId) {
                 await tx.delete(users).where(eq(users.id, customer.userId));

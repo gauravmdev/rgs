@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Plus, Eye, UserPlus, XCircle, RotateCcw, Trash2, Truck, CheckCircle } from 'lucide-react';
+import { Plus, Eye, UserPlus, XCircle, RotateCcw, Trash2, Truck, CheckCircle, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
@@ -23,6 +23,15 @@ export default function OrdersList() {
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
     const [isDeliverModalOpen, setIsDeliverModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+    // Edit Data (for inline editing)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        invoiceNumber: '',
+        invoiceAmount: '',
+        notes: '',
+        items: [] as { description: string; quantity: number }[],
+    });
 
     // Filters
     const [filterStatus, setFilterStatus] = useState('');
@@ -247,7 +256,7 @@ export default function OrdersList() {
         if (!confirm('Are you sure you want to cancel this order?')) return;
 
         try {
-            await api.put(`/orders/${orderId}/cancel`, {});
+            await api.post(`/orders/${orderId}/cancel`, {});
             toast.success('Order cancelled successfully!');
             fetchOrders();
         } catch (error) {
@@ -323,6 +332,63 @@ export default function OrdersList() {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleEditOrder = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!selectedOrder) return;
+
+        setSubmitting(true);
+        try {
+            await api.put(`/orders/${selectedOrder.id}`, {
+                ...editFormData,
+                invoiceAmount: parseFloat(editFormData.invoiceAmount),
+                totalItems: editFormData.items.reduce((sum, item) => sum + item.quantity, 0),
+            });
+            toast.success('Order updated successfully!');
+            setIsEditModalOpen(false);
+            setSelectedOrder(null);
+            fetchOrders();
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast.error('Failed to update order');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const openEditModal = (order: Order) => {
+        setSelectedOrder(order);
+        setEditFormData({
+            invoiceNumber: order.invoiceNumber || '',
+            invoiceAmount: order.invoiceAmount.toString(),
+            notes: order.notes || '',
+            items: order.items ? JSON.parse(JSON.stringify(order.items)).map((item: any) => ({
+                description: item.description,
+                quantity: item.quantity
+            })) : [],
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const addEditItem = () => {
+        setEditFormData({
+            ...editFormData,
+            items: [...editFormData.items, { description: '', quantity: 1 }],
+        });
+    };
+
+    const removeEditItem = (index: number) => {
+        if (editFormData.items.length > 1) {
+            const newItems = editFormData.items.filter((_, i) => i !== index);
+            setEditFormData({ ...editFormData, items: newItems });
+        }
+    };
+
+    const updateEditItem = (index: number, field: 'description' | 'quantity', value: any) => {
+        const newItems = [...editFormData.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setEditFormData({ ...editFormData, items: newItems });
     };
 
     const openAssignModal = (order: Order) => {
@@ -522,6 +588,13 @@ export default function OrdersList() {
                                                         <UserPlus size={16} />
                                                     </button>
                                                     <button
+                                                        onClick={() => openEditModal(order)}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                                        title="Edit Order"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleCancelOrder(order.id)}
                                                         className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
                                                         title="Cancel Order"
@@ -531,22 +604,40 @@ export default function OrdersList() {
                                                 </>
                                             )}
                                             {order.status === 'ASSIGNED' && (
-                                                <button
-                                                    onClick={() => handleOutForDelivery(order.id)}
-                                                    className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
-                                                    title="Mark Out for Delivery"
-                                                >
-                                                    <Truck size={16} />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => handleOutForDelivery(order.id)}
+                                                        className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
+                                                        title="Mark Out for Delivery"
+                                                    >
+                                                        <Truck size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openEditModal(order)}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                                        title="Edit Order"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                </>
                                             )}
                                             {order.status === 'OUT_FOR_DELIVERY' && (
-                                                <button
-                                                    onClick={() => openDeliverModal(order)}
-                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                    title="Mark Delivered"
-                                                >
-                                                    <CheckCircle size={16} />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => openDeliverModal(order)}
+                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                        title="Mark Delivered"
+                                                    >
+                                                        <CheckCircle size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openEditModal(order)}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                                        title="Edit Order"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                </>
                                             )}
                                             {order.status === 'DELIVERED' && (
                                                 <button
@@ -691,18 +782,6 @@ export default function OrdersList() {
                                                             <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">{customer.storeName}</span>
                                                         </div>
                                                     ))}
-                                                {customers.filter(c =>
-                                                    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                                                    c.phone.includes(customerSearch)
-                                                ).length === 0 && (
-                                                        <div className="p-3 text-center">
-                                                            <p className="text-sm text-gray-500 mb-2">No customer found</p>
-                                                            <Button size="sm" onClick={() => setIsCreatingCustomer(true)}>
-                                                                <UserPlus size={16} className="mr-1" />
-                                                                Create New Customer
-                                                            </Button>
-                                                        </div>
-                                                    )}
                                             </div>
                                         )}
                                         {!customerSearch && (
@@ -727,15 +806,6 @@ export default function OrdersList() {
                                                 <p className="text-sm text-blue-700">
                                                     {customers.find(c => c.id.toString() === createFormData.customerId)?.phone}
                                                 </p>
-                                                {(customers.find(c => c.id.toString() === createFormData.customerId)?.apartment ||
-                                                    customers.find(c => c.id.toString() === createFormData.customerId)?.address) && (
-                                                        <p className="text-sm text-blue-700 mt-1">
-                                                            {[
-                                                                customers.find(c => c.id.toString() === createFormData.customerId)?.apartment,
-                                                                customers.find(c => c.id.toString() === createFormData.customerId)?.address
-                                                            ].filter(Boolean).join(', ')}
-                                                        </p>
-                                                    )}
                                             </div>
                                         </div>
                                         <button
@@ -752,10 +822,6 @@ export default function OrdersList() {
                                 )}
                             </div>
 
-                            {/* Store field hidden if customer selected (auto-filled), otherwise shown but disabled? 
-                                User said: "when we select the customer store information doesnt have to be selected as it should already be there"
-                                So I will hide it or show it as read-only info.
-                            */}
                             {createFormData.customerId && (
                                 <div>
                                     <label className="label">Store</label>
@@ -768,16 +834,6 @@ export default function OrdersList() {
                                 </div>
                             )}
 
-                            {/* If no customer selected, user can't select store manually because store depends on customer in the new flow?
-                                 Actually, user might want to pick store first? The prompt implies customer drives store.
-                                 "if customer is not there... it can be created... when we select the customer store information doesnt have to be selected"
-                                 So I'll just hide the store select if customer is selected. If not, maybe show it? 
-                                 But I already removed the manual store select in favor of auto-fill.
-                                 Wait, if I create a new customer, I pick the store THEN.
-                                 So mainly, store is derived.
-                            */}
-
-                            {/* ... Rest of the form inputs same as before ... */}
                             <Input
                                 label="Invoice Number"
                                 value={createFormData.invoiceNumber}
@@ -877,7 +933,8 @@ export default function OrdersList() {
                             </Button>
                         </div>
                     </form>
-                )}
+                )
+                }
             </Modal>
 
             {/* Assign Delivery Partner Modal */}
@@ -1105,6 +1162,89 @@ export default function OrdersList() {
                     </div>
                 </form>
             </Modal>
-        </div >
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Order"
+                size="lg"
+            >
+                <form onSubmit={handleEditOrder} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Invoice Number"
+                            value={editFormData.invoiceNumber}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceNumber: e.target.value })}
+                        />
+                        <Input
+                            label="Invoice Amount *"
+                            type="number"
+                            step="0.01"
+                            value={editFormData.invoiceAmount}
+                            onChange={(e) => setEditFormData({ ...editFormData, invoiceAmount: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="label">Order Items</label>
+                            <Button type="button" size="sm" onClick={addEditItem}>Add Item</Button>
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {editFormData.items.map((item, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        className="input flex-1"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateEditItem(index, 'description', e.target.value)}
+                                        required
+                                    />
+                                    <input
+                                        className="input w-24"
+                                        type="number"
+                                        placeholder="Qty"
+                                        value={item.quantity}
+                                        onChange={(e) => updateEditItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                        min="1"
+                                        required
+                                    />
+                                    {editFormData.items.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeEditItem(index)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="label">Notes</label>
+                        <textarea
+                            className="input"
+                            rows={3}
+                            value={editFormData.notes}
+                            onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" loading={submitting}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+        </div>
     );
 }

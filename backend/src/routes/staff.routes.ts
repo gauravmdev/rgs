@@ -260,6 +260,40 @@ staffRoutes.put('/:id', requireAdmin, async (c) => {
 });
 
 /**
+ * PATCH /api/staff/:id/status
+ * Toggle staff active status - Admin only
+ */
+staffRoutes.patch('/:id/status', requireAdmin, async (c) => {
+    try {
+        const staffId = parseInt(c.req.param('id'));
+        const body = await c.req.json();
+        const { isActive } = body;
+
+        if (typeof isActive !== 'boolean') {
+            return c.json({ error: 'isActive must be a boolean' }, 400);
+        }
+
+        const staff = await db.query.users.findFirst({
+            where: eq(users.id, staffId),
+        });
+
+        if (!staff) {
+            return c.json({ error: 'Staff member not found' }, 404);
+        }
+
+        await db
+            .update(users)
+            .set({ isActive })
+            .where(eq(users.id, staffId));
+
+        return c.json({ message: `Staff member ${isActive ? 'activated' : 'deactivated'} successfully` });
+    } catch (error: any) {
+        console.error('Toggle staff status error:', error);
+        throw error;
+    }
+});
+
+/**
  * PUT /api/staff/:id/change-password
  * Change staff password - Admin only
  */

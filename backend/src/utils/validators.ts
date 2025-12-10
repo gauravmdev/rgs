@@ -75,9 +75,9 @@ export const cancelOrderSchema = z.object({
 // ============= CUSTOMER SCHEMAS =============
 export const createCustomerSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email format'),
+    email: z.string().email('Invalid email format').optional().or(z.literal('')),
     phone: z.string().min(10, 'Phone must be at least 10 characters'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: z.string().min(6, 'Password must be at least 6 characters').optional(),
     storeId: z.number().int().positive('Store ID is required'),
     apartment: z.string().optional(),
     address: z.string().optional(),

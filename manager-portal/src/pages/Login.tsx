@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
@@ -60,11 +59,12 @@ export default function Login() {
         <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
-                        <Store className="text-white" size={32} />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900">Store Manager</h1>
-                    <p className="text-gray-600 mt-2">Portal</p>
+                    <img
+                        src="/logo.png"
+                        alt="Rakhangi General Stores"
+                        className="h-20 mx-auto mb-4"
+                    />
+                    <p className="text-gray-600 mt-2">Store Manager Portal</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

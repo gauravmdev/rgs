@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, CheckCircle, Clock, LogOut, Truck } from 'lucide-react';
+import { Package, CheckCircle, Clock, LogOut, Truck, User } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { formatCurrency, formatDateTime, getStatusColor, getStatusLabel } from '../lib/utils';
@@ -107,6 +107,13 @@ export default function Dashboard() {
                         <p className="text-primary-100">Welcome, {user?.name}</p>
                     </div>
                     <div className="flex space-x-2">
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
+                            title="My Profile"
+                        >
+                            <User size={24} />
+                        </button>
                         <button
                             onClick={() => navigate('/history')}
                             className="p-2 hover:bg-primary-700 rounded-lg transition-colors"

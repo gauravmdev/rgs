@@ -95,7 +95,7 @@ export default function LiveOrders() {
 
         setSubmitting(true);
         try {
-            await api.post(`/orders/${selectedOrder.id}/assign`, {
+            await api.put(`/orders/${selectedOrder.id}/assign`, {
                 deliveryPartnerId: parseInt(selectedDeliveryBoy),
             });
 

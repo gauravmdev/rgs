@@ -1,16 +1,18 @@
 import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { db } from '../config/database';
-import { users, stores, customers, orders, orderItems, deliveries } from './schema';
+import { users, stores, customers, orders, orderItems, deliveries, dueClearances, returns } from './schema';
 
 async function seed() {
     console.log('🌱 Starting database seed...');
 
     try {
-        // Clear existing data
+        // Clear existing data (order matters due to foreign key constraints)
         console.log('🗑️  Clearing existing data...');
         await db.delete(orderItems);
         await db.delete(deliveries);
+        await db.delete(returns);
+        await db.delete(dueClearances);
         await db.delete(orders);
         await db.delete(customers);
         await db.delete(users);

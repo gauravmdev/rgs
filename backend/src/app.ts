@@ -35,7 +35,7 @@ app.use('*', async (c, next) => {
     // Check if origin is allowed
     if (origin && (allowedDomains.includes(origin) || process.env.ALLOWED_ORIGINS === '*')) {
         c.header('Access-Control-Allow-Origin', origin);
-        c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         c.header('Access-Control-Allow-Credentials', 'true');
     }

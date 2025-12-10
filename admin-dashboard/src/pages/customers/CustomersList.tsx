@@ -21,7 +21,6 @@ export default function CustomersList() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        password: '',
         phone: '',
         storeId: '',
         apartment: '',
@@ -104,15 +103,11 @@ export default function CustomersList() {
                 address: formData.address,
             };
 
-            // Only send email/password if creating or if provided during edit
+            // Only send email if adding new customer or if provided during edit
             if (!editingId) {
-                payload.email = formData.email;
-                payload.password = formData.password;
+                if (formData.email) payload.email = formData.email;
             } else {
                 if (formData.name) payload.name = formData.name;
-                // Don't send email involved in simple edit to avoid unique constraint if not changed, 
-                // but actually API might ignore or check. 
-                // Let's rely on API. The PUT endpoint updates user based on name/phone.
             }
 
             if (editingId) {
@@ -145,8 +140,7 @@ export default function CustomersList() {
     const handleEditCustomer = (customer: Customer) => {
         setFormData({
             name: customer.name,
-            email: customer.email, // Read only in UI usually for customers to not break login? Or allowed.
-            password: '', // Leave blank to keep unchanged
+            email: customer.email,
             phone: customer.phone,
             storeId: customer.storeId.toString(),
             apartment: customer.apartment || '',
@@ -166,7 +160,29 @@ export default function CustomersList() {
             fetchCustomers();
         } catch (error: any) {
             console.error('Failed to delete customer:', error);
-            toast.error(error.response?.data?.error || 'Failed to delete customer');
+
+            // Check for has orders error
+            if (error.response?.status === 409 && error.response?.data?.code === 'HAS_ORDERS') {
+                const orderCount = error.response.data.orderCount;
+                const forceDelete = confirm(
+                    `This customer has ${orderCount} associated orders. \n` +
+                    `Do you want to delete the customer AND all their associated orders? \n\n` +
+                    `WARNING: This action is irreversible and will delete all order history for this customer.`
+                );
+
+                if (forceDelete) {
+                    try {
+                        await api.delete(`/customers/${id}?force=true`);
+                        toast.success('Customer and associated orders deleted successfully');
+                        fetchCustomers();
+                    } catch (forceError: any) {
+                        console.error('Failed to force delete customer:', forceError);
+                        toast.error(forceError.response?.data?.error || 'Failed to delete customer recursively');
+                    }
+                }
+            } else {
+                toast.error(error.response?.data?.error || 'Failed to delete customer');
+            }
         }
     };
 
@@ -364,19 +380,8 @@ export default function CustomersList() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         error={errors.email}
-                        required
                         disabled={!!editingId}
                         className={editingId ? "bg-gray-100" : ""}
-                    />
-
-                    <Input
-                        label={editingId ? "Password (leave blank to keep unchanged)" : "Password"}
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        error={errors.password}
-                        minLength={6}
-                        required={!editingId}
                     />
 
                     <Input
