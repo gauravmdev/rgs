@@ -56,6 +56,16 @@ export default function LiveOrders() {
         socket.on('order-cancelled', handleRealtimeUpdate);
         socket.on('order-returned', handleRealtimeUpdate);
 
+        const joinRooms = () => {
+            if (user?.role === 'ADMIN') {
+                socket?.emit('join-admin');
+                console.log('📍 Joined admin room');
+            } else if (user?.storeId) {
+                socket?.emit('join-store', user.storeId);
+                console.log('📍 Joined store room:', user.storeId);
+            }
+        };
+
         // Ensure socket is connected
         if (!socket.connected) {
             console.warn('⚠️ Socket not connected, attempting to connect...');
@@ -64,18 +74,11 @@ export default function LiveOrders() {
             // Wait for connection
             socket.once('connect', () => {
                 console.log('✅ Socket connected in LiveOrders');
-                if (user?.storeId) {
-                    socket.emit('join-store', user.storeId);
-                    console.log('📍 Joined store room:', user.storeId);
-                }
+                joinRooms();
             });
         } else {
             console.log('✅ Socket already connected:', socket.id);
-            // Make sure we're in the store room
-            if (user?.storeId) {
-                socket.emit('join-store', user.storeId);
-                console.log('📍 Re-joined store room:', user.storeId);
-            }
+            joinRooms();
         }
 
         // Backup refresh every 30 seconds

@@ -2,7 +2,7 @@ import { useEffect, useState, type ElementType } from 'react';
 import { ShoppingCart, Package, DollarSign, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
-import { getSocket } from '../lib/socket';
+import { getSocket, connectSocket } from '../lib/socket';
 import { formatCurrency } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import type { DashboardStats, Order } from '../types';
@@ -24,13 +24,35 @@ export default function Dashboard() {
     useEffect(() => {
         fetchDashboardData();
 
-        // Listen for real-time updates
-        const socket = getSocket();
+        // Connect/Get socket
+        // We use connectSocket directly to ensure we have a socket instance
+        // even if Layout hasn't finished initializing it yet
+        const socket = connectSocket(user?.storeId, user?.role === 'ADMIN');
+
         if (socket) {
+            // Ensure we are in the right room
+            if (socket.connected) {
+                if (user?.role === 'ADMIN') {
+                    socket.emit('join-admin');
+                } else if (user?.storeId) {
+                    socket.emit('join-store', user?.storeId);
+                }
+            } else {
+                socket.once('connect', () => {
+                    if (user?.role === 'ADMIN') {
+                        socket.emit('join-admin');
+                    } else if (user?.storeId) {
+                        socket.emit('join-store', user?.storeId);
+                    }
+                });
+            }
+
             socket.on('order-created', handleOrderUpdate);
             socket.on('order-updated', handleOrderUpdate);
             socket.on('order-delivered', handleOrderUpdate);
             socket.on('order-cancelled', handleOrderUpdate);
+            socket.on('order-assigned', handleOrderUpdate); // Also listen for assignment
+            socket.on('order-out-for-delivery', handleOrderUpdate);
         }
 
         return () => {
@@ -39,9 +61,11 @@ export default function Dashboard() {
                 socket.off('order-updated', handleOrderUpdate);
                 socket.off('order-delivered', handleOrderUpdate);
                 socket.off('order-cancelled', handleOrderUpdate);
+                socket.off('order-assigned', handleOrderUpdate);
+                socket.off('order-out-for-delivery', handleOrderUpdate);
             }
         };
-    }, []);
+    }, [user?.storeId, user?.role]);
 
     const fetchDashboardData = async () => {
         try {
