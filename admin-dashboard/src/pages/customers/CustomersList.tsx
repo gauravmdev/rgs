@@ -63,7 +63,6 @@ export default function CustomersList() {
         setFormData({
             name: '',
             email: '',
-            password: '',
             phone: '',
             storeId: '',
             apartment: '',
@@ -79,7 +78,6 @@ export default function CustomersList() {
         setFormData({
             name: '',
             email: '',
-            password: '',
             phone: '',
             storeId: '',
             apartment: '',
