@@ -114,15 +114,15 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {statCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
-                        <div key={index} className="card">
+                        <div key={index} className="card p-4 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
                                 </div>
                                 <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
                                     <Icon size={24} />
@@ -135,8 +135,8 @@ export default function Dashboard() {
 
             {/* Active Orders Breakdown */}
             <div className="card">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Active Orders</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Active Orders</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">Created</p>
                         <p className="text-2xl font-bold text-gray-900">{stats?.activeOrders.created || 0}</p>
@@ -155,7 +155,7 @@ export default function Dashboard() {
             {/* Recent Orders */}
             <div className="card">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Recent Orders</h2>
                     <a href="/orders" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
                         View All →
                     </a>
@@ -167,47 +167,76 @@ export default function Dashboard() {
                         <p>No recent orders</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {recentOrders.slice(0, 10).map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {order.orderNumber}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {order.customerName}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                                                order.status === 'OUT_FOR_DELIVERY' ? 'bg-yellow-100 text-yellow-800' :
-                                                    order.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-800' :
-                                                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {order.status.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {formatCurrency(order.invoiceAmount)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {new Date(order.createdAt).toLocaleDateString()}
-                                        </td>
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {recentOrders.slice(0, 10).map((order) => (
+                                        <tr key={order.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {order.orderNumber}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {order.customerName}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                                                    order.status === 'OUT_FOR_DELIVERY' ? 'bg-yellow-100 text-yellow-800' :
+                                                        order.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-800' :
+                                                            order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                                                'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {order.status.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {formatCurrency(order.invoiceAmount)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {recentOrders.slice(0, 5).map((order) => (
+                                <div key={order.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <p className="font-semibold text-gray-900 text-sm">#{order.orderNumber}</p>
+                                            <p className="text-sm text-gray-600">{order.customerName}</p>
+                                        </div>
+                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                                            order.status === 'OUT_FOR_DELIVERY' ? 'bg-yellow-100 text-yellow-800' :
+                                                order.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-800' :
+                                                    order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {order.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200 mt-2">
+                                        <span className="font-medium text-gray-900">{formatCurrency(order.invoiceAmount)}</span>
+                                        <span className="text-gray-500 text-xs">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
         </div>

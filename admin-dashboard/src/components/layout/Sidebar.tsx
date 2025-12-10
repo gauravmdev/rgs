@@ -8,10 +8,15 @@ import {
     BarChart3,
     FileText,
     LogOut,
+    X,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
-export default function Sidebar() {
+interface SidebarProps {
+    onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
     const { user, logout } = useAuthStore();
 
     const navItems = [
@@ -29,25 +34,36 @@ export default function Sidebar() {
     );
 
     return (
-        <div className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
-            {/* Logo */}
-            <div className="p-6 border-b border-gray-800">
-                <img
-                    src="/logo.png"
-                    alt="Rakhangi General Stores"
-                    className="w-full h-auto mb-2"
-                />
-                <p className="text-sm text-gray-400 mt-1 text-center">Admin Portal</p>
+        <div className="bg-gray-900 text-white min-h-screen flex flex-col h-full">
+            {/* Logo & Close Button */}
+            <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+                <div>
+                    <img
+                        src="/logo.png"
+                        alt="Rakhangi General Stores"
+                        className="h-12 w-auto mb-2"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">Admin Portal</p>
+                </div>
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="md:hidden text-gray-400 hover:text-white p-2 text-2xl"
+                    >
+                        <X size={24} />
+                    </button>
+                )}
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                 {filteredNavItems.map((item) => {
                     const Icon = item.icon;
                     return (
                         <NavLink
                             key={item.path}
                             to={item.path}
+                            onClick={onClose}
                             className={({ isActive }) =>
                                 `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive
                                     ? 'bg-primary-600 text-white'

@@ -526,7 +526,8 @@ export default function OrdersList() {
 
             {/* Orders Table */}
             <div className="card">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -534,7 +535,6 @@ export default function OrdersList() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                {/* source header removed */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -560,7 +560,6 @@ export default function OrdersList() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {formatCurrency(order.invoiceAmount)}
                                     </td>
-                                    {/* source cell removed */}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                                             {order.status.replace('_', ' ')}
@@ -663,6 +662,71 @@ export default function OrdersList() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List View */}
+                <div className="md:hidden space-y-4">
+                    {orders.map((order) => (
+                        <div key={order.id} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => navigate(`/orders/${order.id}`)}
+                                            className="font-bold text-gray-900"
+                                        >
+                                            #{order.orderNumber}
+                                        </button>
+                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
+                                            {order.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-1">{order.customerName}</p>
+                                    <p className="text-xs text-gray-500">{order.storeName}</p>
+                                </div>
+                                <p className="font-bold text-gray-900">{formatCurrency(order.invoiceAmount)}</p>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                <span className="text-xs text-gray-500">{formatDate(order.createdAt)}</span>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => navigate(`/orders/${order.id}`)}
+                                        className="p-1.5 text-blue-600 bg-blue-50 rounded-lg"
+                                        title="View Details"
+                                    >
+                                        <Eye size={16} />
+                                    </button>
+
+                                    {/* Simplified Actions for Mobile */}
+                                    {order.status === 'CREATED' && (
+                                        <button
+                                            onClick={() => openAssignModal(order)}
+                                            className="p-1.5 text-green-600 bg-green-50 rounded-lg"
+                                        >
+                                            <UserPlus size={16} />
+                                        </button>
+                                    )}
+                                    {order.status === 'ASSIGNED' && (
+                                        <button
+                                            onClick={() => handleOutForDelivery(order.id)}
+                                            className="p-1.5 text-yellow-600 bg-yellow-50 rounded-lg"
+                                        >
+                                            <Truck size={16} />
+                                        </button>
+                                    )}
+                                    {order.status === 'OUT_FOR_DELIVERY' && (
+                                        <button
+                                            onClick={() => openDeliverModal(order)}
+                                            className="p-1.5 text-green-600 bg-green-50 rounded-lg"
+                                        >
+                                            <CheckCircle size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {orders.length === 0 && (

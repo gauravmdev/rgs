@@ -313,7 +313,8 @@ export default function StaffList() {
 
             {/* Staff Table */}
             <div className="card">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -413,6 +414,68 @@ export default function StaffList() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                    {staff.map((staffMember) => (
+                        <div key={staffMember.id} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="font-bold text-gray-900">{staffMember.name}</span>
+                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${staffMember.role === 'ADMIN'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : staffMember.role === 'STORE_MANAGER'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : 'bg-green-100 text-green-800'
+                                            }`}>
+                                            {staffMember.role === 'STORE_MANAGER' ? 'Manager' :
+                                                staffMember.role === 'DELIVERY_BOY' ? 'Delivery Boy' : 'Admin'}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-1">{staffMember.email}</p>
+                                    <p className="text-xs text-gray-500">{staffMember.phone}</p>
+                                </div>
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${staffMember.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
+                                    {staffMember.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                <div className="text-xs text-gray-500">
+                                    {staffMember.role === 'ADMIN' ? (
+                                        <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">All Stores</span>
+                                    ) : (
+                                        staffMember.store?.name || 'Not Assigned'
+                                    )}
+                                </div>
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => handleToggleStatus(staffMember.id, !staffMember.isActive)}
+                                        className={`${staffMember.isActive ? 'text-amber-600' : 'text-green-600'}`}
+                                    >
+                                        {staffMember.isActive ? <Ban size={18} /> : <CheckCircle size={18} />}
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenModal(staffMember)}
+                                        className="text-primary-600"
+                                    >
+                                        <Edit size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(staffMember.id)}
+                                        className="text-red-600"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {staff.length === 0 && (

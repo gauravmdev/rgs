@@ -276,7 +276,8 @@ export default function CustomersList() {
 
             {/* Customers Table */}
             <div className="card">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -347,6 +348,59 @@ export default function CustomersList() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                    {filteredCustomers.map((customer) => (
+                        <div key={customer.id} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="font-bold text-gray-900">{customer.name}</div>
+                                    <div className="text-sm text-gray-500">{customer.phone}</div>
+                                    <div className="text-xs text-gray-400 mt-1">{customer.storeName}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-medium text-gray-900">
+                                        Sales: {formatCurrency(parseFloat(customer.totalSales.toString()))}
+                                    </div>
+                                    {parseFloat(customer.totalDues.toString()) > 0 ? (
+                                        <div className="text-red-600 text-sm font-medium mt-1">
+                                            Due: {formatCurrency(parseFloat(customer.totalDues.toString()))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-green-600 text-sm mt-1">No Dues</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                <div className="text-xs text-gray-500">
+                                    Joined: {formatDate(customer.createdAt)}
+                                </div>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => navigate(`/customers/${customer.id}`)}
+                                        className="p-1.5 bg-primary-600 text-white rounded-lg"
+                                    >
+                                        <Eye size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditCustomer(customer)}
+                                        className="p-1.5 text-blue-600 bg-blue-50 rounded-lg"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteCustomer(customer.id)}
+                                        className="p-1.5 text-red-600 bg-red-50 rounded-lg"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {filteredCustomers.length === 0 && (
