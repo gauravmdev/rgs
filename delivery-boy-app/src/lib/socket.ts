@@ -21,9 +21,11 @@ export const connectSocket = (storeId?: number, isAdmin?: boolean) => {
     console.log('🔌 Creating new socket connection...');
 
     // Get headers from env or default
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    // Remove /api from the end to get the root URL for socket.io
-    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+    // Get headers from env or default
+    // Use the same logic as api.ts - prioritize dev port
+    const socketUrl = import.meta.env.DEV
+        ? 'http://localhost:3001'
+        : (import.meta.env.VITE_API_URL || 'https://api.rakhangi.shop').replace(/\/api\/?$/, '');
 
     socket = io(socketUrl, {
         autoConnect: true,
