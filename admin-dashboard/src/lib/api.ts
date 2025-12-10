@@ -2,7 +2,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://api.rakhangi.shop/api',
+    baseURL: import.meta.env.DEV ? 'http://localhost:3001/api' : (import.meta.env.VITE_API_URL || 'https://api.rakhangi.shop/api'),
     headers: {
         'Content-Type': 'application/json',
     },

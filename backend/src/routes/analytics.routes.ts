@@ -166,7 +166,13 @@ analyticsRoutes.get('/daily-sales', async (c) => {
         }
 
         // Default to last 30 days if not provided
-        const end = endDate ? new Date(endDate) : new Date();
+        let end = endDate ? new Date(endDate) : new Date();
+
+        // If default (now), set to end of day to handle timezone differences where DB might be ahead (e.g. stored in local time)
+        if (!endDate) {
+            end.setHours(23, 59, 59, 999);
+        }
+
         const start = startDate ? new Date(startDate) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
 
         // Cache key

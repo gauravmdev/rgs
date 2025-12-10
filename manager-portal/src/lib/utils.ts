@@ -8,11 +8,11 @@ export const formatCurrency = (amount: number): string => {
 };
 
 export const formatDate = (date: string | Date): string => {
-    return format(new Date(date), 'MMM dd, yyyy');
+    return format(new Date(date), 'dd/MM/yyyy');
 };
 
 export const formatDateTime = (date: string | Date): string => {
-    return format(new Date(date), 'MMM dd, yyyy HH:mm');
+    return format(new Date(date), 'dd/MM/yyyy HH:mm');
 };
 
 export const getStatusColor = (status: string): string => {

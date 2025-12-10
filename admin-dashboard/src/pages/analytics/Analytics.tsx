@@ -35,12 +35,7 @@ interface PaymentBreakdown {
     percentage: number;
 }
 
-interface SourceBreakdown {
-    source: string;
-    count: number;
-    totalSales: number;
-    percentage: number;
-}
+
 
 interface DeliveryPerformance {
     deliveryPartnerId: number;
@@ -57,7 +52,7 @@ export default function Analytics() {
     const [dailySales, setDailySales] = useState<DailySalesData[]>([]);
     const [weeklySales, setWeeklySales] = useState<WeeklySalesData[]>([]);
     const [paymentBreakdown, setPaymentBreakdown] = useState<PaymentBreakdown[]>([]);
-    const [sourceBreakdown, setSourceBreakdown] = useState<SourceBreakdown[]>([]);
+
     const [deliveryPerformance, setDeliveryPerformance] = useState<DeliveryPerformance[]>([]);
 
     useEffect(() => {
@@ -70,18 +65,18 @@ export default function Analytics() {
             const storeId = user?.storeId;
             const storeParam = storeId ? `?storeId=${storeId}` : '';
 
-            const [dailyRes, weeklyRes, paymentRes, sourceRes, deliveryRes] = await Promise.all([
+            const [dailyRes, weeklyRes, paymentRes, deliveryRes] = await Promise.all([
                 api.get(`/analytics/daily-sales${storeParam}`),
                 api.get(`/analytics/weekly-sales${storeParam}`),
                 api.get(`/analytics/payment-methods${storeParam}`),
-                api.get(`/analytics/order-sources${storeParam}`),
+
                 api.get(`/analytics/delivery-performance${storeParam}`),
             ]);
 
             setDailySales(dailyRes.data.salesData || []);
             setWeeklySales(weeklyRes.data.weeklySales || []);
             setPaymentBreakdown(paymentRes.data.paymentBreakdown || []);
-            setSourceBreakdown(sourceRes.data.sourceBreakdown || []);
+
             setDeliveryPerformance(deliveryRes.data.deliveryPerformance || []);
         } catch (error) {
             console.error('Failed to fetch analytics:', error);
@@ -207,7 +202,7 @@ export default function Analytics() {
             </div>
 
             {/* Charts Row 2 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
                 {/* Payment Methods */}
                 <div className="card">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Payment Methods Distribution</h2>
@@ -250,35 +245,7 @@ export default function Analytics() {
                     </div>
                 </div>
 
-                {/* Order Sources */}
-                <div className="card">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Order Sources</h2>
-                    {sourceBreakdown.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={sourceBreakdown}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="source" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="count" fill="#8b5cf6" name="Orders" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="text-center py-12 text-gray-500">No source data available</div>
-                    )}
-                    <div className="mt-4 space-y-2">
-                        {sourceBreakdown.map((source) => (
-                            <div key={source.source} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-900">{source.source}</span>
-                                <div className="text-right">
-                                    <p className="font-medium text-gray-900">{source.count} orders</p>
-                                    <p className="text-gray-600">{formatCurrency(source.totalSales)}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+
             </div>
 
             {/* Delivery Performance */}

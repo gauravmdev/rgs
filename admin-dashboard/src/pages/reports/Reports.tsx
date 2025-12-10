@@ -3,6 +3,7 @@ import { FileText, Download, Calendar, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import Button from '../../components/ui/Button';
+import DatePicker from '../../components/ui/DatePicker';
 
 interface ReportCard {
     id: string;
@@ -136,21 +137,19 @@ export default function Reports() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="label">Start Date</label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="input"
+                        <DatePicker
+                            selected={startDate ? new Date(startDate) : null}
+                            onChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
+                            placeholderText="DD/MM/YYYY"
                         />
                     </div>
                     <div>
                         <label className="label">End Date</label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="input"
-                            min={startDate}
+                        <DatePicker
+                            selected={endDate ? new Date(endDate) : null}
+                            onChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
+                            placeholderText="DD/MM/YYYY"
+                            minDate={startDate ? new Date(startDate) : undefined}
                         />
                     </div>
                     <div>

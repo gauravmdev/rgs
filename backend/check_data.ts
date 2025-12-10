@@ -1,0 +1,1 @@
+import { db } from './src/config/database'; import { customers } from './src/db/schema'; async function main() { const c = await db.query.customers.findMany({ limit: 5 }); console.log(c); process.exit(0); } main();
